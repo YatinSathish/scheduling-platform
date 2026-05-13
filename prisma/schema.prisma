@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Status values: "UNSCHEDULED" | "SCHEDULED"
+model Quote {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  status      String   @default("UNSCHEDULED")
+  createdAt   DateTime @default(now())
+
+  managerId String
+  manager   Manager @relation(fields: [managerId], references: [id])
+
+  job Job?
+}
+
+// Status values: "SCHEDULED" | "COMPLETED"
+model Job {
+  id             String   @id @default(cuid())
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  status         String   @default("SCHEDULED")
+  createdAt      DateTime @default(now())
+
+  quoteId String @unique
+  quote   Quote  @relation(fields: [quoteId], references: [id])
+
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+
+  managerId String
+  manager   Manager @relation(fields: [managerId], references: [id])
+
+  notifications Notification[]
+}
+
+model Manager {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  quotes        Quote[]
+  jobs          Job[]
+  notifications Notification[]
+}
+
+model Technician {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  jobs          Job[]
+  notifications Notification[]
+}
+
+// recipientType values: "TECHNICIAN" | "MANAGER"
+model Notification {
+  id            String    @id @default(cuid())
+  message       String
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+  recipientType String
+
+  technicianId String?
+  technician   Technician? @relation(fields: [technicianId], references: [id])
+
+  managerId String?
+  manager   Manager? @relation(fields: [managerId], references: [id])
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id])
+}
