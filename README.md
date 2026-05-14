@@ -1,6 +1,6 @@
 # brix Scheduling Platform
 
-A service scheduling and notification system where managers assign quotes to technicians, with backend-enforced conflict prevention and automatic notifications.
+A scheduling tool that lets managers assign quotes to technicians, prevent double-bookings, and keep both sides notified as work moves through the pipeline.
 
 ---
 
@@ -8,49 +8,49 @@ A service scheduling and notification system where managers assign quotes to tec
 
 ```bash
 npm install
-npx prisma migrate dev --name init
-npx tsx prisma/seed.ts
+npx prisma migrate deploy
+npm run seed
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The app opens to the manager dashboard. Use the **Manager / Technician** tab in the header to switch views, and the **Hi, [name] ▾** dropdown to switch between seeded users (2 managers, 3 technicians).
+The app opens to the manager dashboard. Use the **Manager / Technician** tab in the header to switch views, and the name chips below the greeting to switch between seeded users (2 managers, 3 technicians).
 
 ---
 
 ## What's Built
 
 ### Manager view
+
 - Grid of unscheduled quotes ready to be assigned
 - **Assign Job** opens a modal: pick a technician, date, and 30-minute start slot
-- Taken time slots are greyed out and disabled — no manual conflict hunting required
+- Taken time slots are greyed out and disabled. No manual conflict hunting required
 - Notification bell shows when technicians complete jobs; mark all as read in one click
 
 ### Technician view
+
 - Upcoming and completed jobs with full date/time and description
-- **Mark Complete** shows a confirmation popup before firing — prevents accidental double-clicks
+- **Mark Complete** shows a confirmation popup before firing to prevent accidental double-clicks
 - Notification bell shows new job assignments with timestamps
 
-> **Note:** Quotes are pre-seeded to represent work orders already in the system. The brief specifies *viewing and assigning* quotes — creation is intentionally out of scope. In production this would come from the brix quoting flow.
+> **Note:** Quotes represent work orders already in the system. They are pre-seeded for this demo allowing me to focus on the viewing and assigning flow. In production these would come through the brix quoting pipeline.
 
 ---
 
 ## Stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| Frontend | Next.js 14 App Router + TypeScript | Matches brix's production frontend exactly |
-| API | Next.js API routes | brix uses Go, but fighting Go's type system in a 3–5hr window costs more than the problem. Acknowledged below. |
-| ORM | Prisma v5 | One config line from MySQL (brix's DB). v7 has breaking changes; v5 is stable. |
-| Database | SQLite | Zero Docker setup for reviewer. Relational model fits FK-heavy data. Trivial to swap. |
-| Styling | Tailwind v4 | Brand tokens defined once in `@theme`, propagate as utility classes everywhere. |
+| Layer    | Choice                             | Why                                                                                                                                                                        |
+| -------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend | Next.js 14 App Router + TypeScript | React and TypeScript are my main stack. Next.js was a natural fit — App Router, file-based routing, TypeScript first-class. brix uses it too.                              |
+| API      | Next.js API routes                 | Keeps everything in one project — no separate backend process, no port juggling. Routes share the same TypeScript types as the frontend.                                   |
+| ORM      | Prisma v5                          | Clean Developer Experience. We define a schema, run a migration, get a fully typed client. Works great with TypeScript. v5 over v7 because v7 introduced breaking changes. |
+| Database | SQLite                             | No Docker or separate process needed. The data is FK-heavy which SQL handles well. Easy to swap for MySQL, which is more standard for production.                          |
+| Styling  | Tailwind v4                        | Brand tokens defined once in `@theme`, propagate as utility classes everywhere.                                                                                            |
 
 **On not using Go:** brix uses Go in production. In a time-boxed assessment I made the call that shipping a correct, readable solution in a familiar environment was more valuable than fighting an unfamiliar language. In production I'd extract these API routes into a standalone Go service.
 
-**On not using MongoDB:** My daily driver at Ladder. But this problem has FK relationships everywhere — quotes belong to managers, jobs join four tables, conflict queries need transactions. SQL is the right tool.
-
-**Switching to MySQL:** Change `provider = "sqlite"` to `provider = "mysql"` in `prisma/schema.prisma` and update `DATABASE_URL` in `.env`. No schema changes needed — Prisma handles the rest.
+You can switch to MySQL by changing `provider = "sqlite"` to `provider = "mysql"` in `prisma/schema.prisma` and updating `DATABASE_URL` in `.env`. No schema changes needed as Prisma handles the rest.
 
 ---
 
@@ -66,100 +66,64 @@ A new job `[newStart, newEnd)` conflicts with an existing job `[existingStart, e
 existingStart < newEnd  AND  existingEnd > newStart
 ```
 
-This single condition handles all three cases — partial overlap at the front, partial overlap at the back, and full containment in either direction.
+This single condition handles all three cases. Partial overlap at the front, partial overlap at the back, and full containment in either direction.
 
 ### The race condition problem
 
-A naive check-then-create has a window where two simultaneous requests both pass the conflict check before either writes:
-
-```
-Request A: check (no conflict found) → ...
-Request B: check (no conflict found) → ...
-Request A: create job ✅
-Request B: create job ✅  ← double-booking
-```
+A naive check-then-create has a gap where two requests both pass the conflict check before either one writes to the database. Both see no conflict, both create a job, and the technician ends up double-booked.
 
 ### The transaction solution
 
-The conflict check and job creation are wrapped in a single `prisma.$transaction()`:
+The conflict check and job creation are wrapped in a single transaction. This means the check and the write happen as one unit with nothing able to slip in between them.
 
-```ts
-await prisma.$transaction(async (tx) => {
-  const conflict = await tx.job.findFirst({
-    where: {
-      technicianId,
-      status: "SCHEDULED",
-      scheduledStart: { lt: scheduledEnd },
-      scheduledEnd:   { gt: scheduledStart },
-    },
-  });
-  if (conflict) throw new Error("CONFLICT");
+SQLite only allows one write at a time, so if two requests come in together, the second one waits until the first finishes. By the time the second one runs its check, the first job already exists and the conflict is caught correctly.
 
-  await tx.job.create({ ... });            // create job
-  await tx.quote.update({ ... });          // mark quote SCHEDULED
-  await tx.notification.create({ ... });   // notify technician
-});
-```
-
-The check and write are a single atomic unit. SQLite allows only one writer at a time — if two requests arrive simultaneously, SQLite queues the second until the first commits. The second transaction then sees the newly-created job and correctly throws a conflict.
-
-As a second safety net, Prisma throws `P2034` on write contention, which the route catches and returns as a 409.
-
-**In production with MySQL:** the transaction would use `SELECT ... FOR UPDATE` to acquire a row-level lock before the check, preventing any other transaction from reading the technician's schedule until the first commits.
+As a backup, if two requests do collide at the exact same millisecond, Prisma detects the write collision and the route catches it and returns a 409 conflict response.
 
 ### Availability API
 
 `GET /api/availability?technicianId=xxx&date=YYYY-MM-DD`
 
-Returns the 30-minute start slots that would produce a conflict for a 2-hour job. Instead of integer-hour arithmetic, it iterates every 30-min slot and runs the exact same overlap condition:
+Returns which time slots are already taken for a given technician on a given day. The assign modal uses this to grey out unavailable slots before the manager even tries to book.
 
-```ts
-const slotStart = /* e.g. 10:00 */;
-const slotEnd = slotStart + 2hrs;   // 12:00
-const blocked = jobs.some(j => slotStart < j.scheduledEnd && slotEnd > j.scheduledStart);
-```
-
-This correctly handles non-hour-aligned jobs — a job starting at 8:31am blocks the 7:00, 7:30, 8:00, and 8:30 start slots, not just the integer-hour overlaps simpler arithmetic would produce.
-
----
+Slots are checked in 30-minute intervals. Each slot is tested against the same overlap condition used in the conflict check, so the two are always in sync. This also handles edge cases correctly, for example a job starting at 8:31am will correctly block the 8:00 and 8:30 slots, not just the nearest round hour.
 
 ## Notifications
 
 DB-based polling — the frontend polls `/api/notifications` every 5 seconds. Simple, transparent, and sufficient for assessment scope.
 
-**Why not SSE/WebSockets for this submission:** The brief says "can be simulated." Polling is explicit and easy to follow in a code review. For production: Server-Sent Events would be the right next step — a persistent HTTP stream, no WebSocket handshake complexity, native browser support, works through most proxies.
+**Why not SSE/WebSockets for this submission:** The frontend checks for new notifications every 5 seconds. Simple, easy to follow in a code review, and does the job for this scope. For production the better approach would be Server-Sent Events, where the server pushes updates to the browser the moment something happens instead of the browser asking repeatedly. No unnecessary requests, no delay between the event and the notification appearing.
 
 ---
 
 ## Data Model
 
-```
-Manager      ─── has many ──→ Quote, Job, Notification
-Technician   ─── has many ──→ Job, Notification
-Quote        ─── has one  ──→ Job  (@unique constraint)
-Job          ─── has many ──→ Notification
-Notification ─── belongs to ──→ Technician | Manager  (recipientType field)
-```
+There are 5 tables (Manager, Technician, Quote, Job, Notification). A Manager creates Quotes and assigns Jobs. A Technician gets assigned those Jobs. Each Quote can only have one Job linked to it, enforced at the database level so it is impossible to assign the same quote twice even if something goes wrong in the application. Notifications are sent to either a Technician or a Manager depending on what happened, tracked with a recipient type field.
 
-`Job.quoteId` is `@unique` at the database level — two jobs cannot reference the same quote even if application logic fails.
+`scheduledEnd` is always `scheduledStart + 2 hours`. The UI only sends a start time and the API calculates the end time server-side.
 
-`scheduledEnd` is always `scheduledStart + 2 hours`. The UI only sends a start time; the API calculates and stores the end time. This is enforced server-side and never exposed as an editable input.
-
-**No enums:** SQLite doesn't support them. Used `String` fields in the schema with TypeScript string literal unions (`"SCHEDULED" | "COMPLETED"`) for compile-time safety.
-
----
+**No enums:** SQLite does not support them. Status fields are stored as strings in the database with TypeScript string literal types providing the same safety at the code level.
 
 ## No Auth
 
-Standard assessment shortcut. The **Hi, [name] ▾** dropdown lets the reviewer switch between seeded users without a login flow. In production this would be session-based auth — the switcher would be removed entirely.
+To make it easier to demo both flows, there is a user switcher in the header that lets one jump between the seeded managers and technicians without a login screen. In production this would be replaced with proper session-based auth and the switcher would be removed entirely.
 
 ---
 
 ## What I'd Do Next
 
-- **Go backend** — extract API routes into a standalone Go service to match brix's production architecture
-- **MySQL** — swap `DATABASE_URL` + add `SELECT ... FOR UPDATE` for row-level locking in the conflict transaction
-- **SSE notifications** — replace polling with a Server-Sent Events stream; persistent connection, no interval overhead
-- **Auth** — JWT or session-based; remove the demo user switcher
-- **Quote creation** — let managers create quotes in-app; right now they're seeded
-- **Optimistic UI** — hide assigned quotes from the manager grid immediately before the API responds
+- **Auth** — session-based auth so managers and technicians have their own accounts; removes the need for the demo switcher
+- **Richer job details** — add fields like job notes, priority level, estimated duration, and customer contact info so technicians have everything they need before arriving on site
+- **Job acceptance** — let technicians accept or decline a job before it is confirmed, so managers know the job is actually covered
+- **SSE notifications** — replace polling with Server-Sent Events so notifications arrive instantly rather than on a polling interval
+- **Quote creation** — let managers create and manage quotes inside the app rather than relying on seeded data
+- **Optimistic UI** — remove an assigned quote from the manager grid immediately when assigned rather than waiting for the API to respond
+- **Production database** — swap SQLite for MySQL to match brix's production setup; Prisma makes this a one line config change
+
+## Use of AI Tools
+
+I used Claude Code throughout this assessment for scaffolding, code generation, debugging, and working through edge cases like the conflict prevention logic. I reviewed everything it produced before accepting it, and ran TypeScript checks and linting throughout to catch any issues before they built up.
+
+The architectural decisions were mine to reason through. Choosing SQLite over MongoDB was a deliberate call I worked out by weighing reviewer setup friction, data model fit, and what I could actually defend. The conflict prevention approach and the trade-offs in this README came from understanding the problem first and then using the tools to build it.
+
+I also pushed back when the AI steered me wrong. It initially suggested Go and MySQL to match brix's stack, and I made the call that shipping something half-finished in an unfamiliar language in a 3-5 hour window was the wrong move. The tool is only as good as the judgment behind it, which is exactly how I use it day to day at Ladder Inc.
