@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!technicianId) {
     return NextResponse.json(
       { error: "technicianId is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch jobs" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -122,19 +122,24 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2034"
-    ) {
-      return NextResponse.json(
-        { error: "Scheduling conflict detected. Please try again." },
-        { status: 409 },
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2034") {
+        return NextResponse.json(
+          { error: "Scheduling conflict detected. Please try again." },
+          { status: 409 },
+        );
+      }
+      if (error.code === "P2002") {
+        return NextResponse.json(
+          { error: "This quote has already been assigned." },
+          { status: 409 },
+        );
+      }
     }
 
     return NextResponse.json(
       { error: "Failed to assign job" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
