@@ -7,6 +7,7 @@ A scheduling tool that lets managers assign quotes to technicians, prevent doubl
 ## Quick Start
 
 ```bash
+cp .env.example .env
 npm install
 npx prisma migrate deploy
 npm run seed
