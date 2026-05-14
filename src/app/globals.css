@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* brix brand */
+  --color-brand-primary:  #2563eb;
+  --color-brand-hover:    #1d4ed8;
+  --color-brand-light:    #eff6ff;
+  --color-brand-border:   #bfdbfe;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* surface */
+  --color-surface:        #ffffff;
+  --color-surface-muted:  #f9fafb;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* text */
+  --color-text-primary:   #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-disabled:  #9ca3af;
+
+  /* border */
+  --color-border:         #e5e7eb;
+
+  /* status — scheduled */
+  --color-status-scheduled-bg:   #eff6ff;
+  --color-status-scheduled-text: #1d4ed8;
+
+  /* status — completed */
+  --color-status-completed-bg:   #f0fdf4;
+  --color-status-completed-text: #15803d;
+
+  /* feedback */
+  --color-error:          #dc2626;
+  --color-error-light:    #fef2f2;
+  --color-success:        #16a34a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #f9fafb;
+  color: #111827;
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
