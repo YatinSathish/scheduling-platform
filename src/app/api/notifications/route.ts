@@ -4,20 +4,22 @@ import { RecipientType } from "@/lib/types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const recipientType = searchParams.get("recipientType") as RecipientType | null;
+  const recipientType = searchParams.get(
+    "recipientType",
+  ) as RecipientType | null;
   const recipientId = searchParams.get("recipientId");
 
   if (!recipientType || !recipientId) {
     return NextResponse.json(
       { error: "recipientType and recipientId are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (recipientType !== "TECHNICIAN" && recipientType !== "MANAGER") {
     return NextResponse.json(
       { error: "recipientType must be TECHNICIAN or MANAGER" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

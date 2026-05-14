@@ -29,7 +29,12 @@ function formatSlot(slot: string): string {
 const selectClass =
   "text-sm border border-border rounded-lg px-3 py-2 bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed";
 
-export default function AssignModal({ quote, managerId, onClose, onAssigned }: Props) {
+export default function AssignModal({
+  quote,
+  managerId,
+  onClose,
+  onAssigned,
+}: Props) {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [technicianId, setTechnicianId] = useState("");
   const [date, setDate] = useState("");
@@ -54,7 +59,9 @@ export default function AssignModal({ quote, managerId, onClose, onAssigned }: P
       setLoadingSlots(true);
       setTime("");
       try {
-        const r = await fetch(`/api/availability?technicianId=${technicianId}&date=${date}`);
+        const r = await fetch(
+          `/api/availability?technicianId=${technicianId}&date=${date}`,
+        );
         const data: { takenSlots: string[] } = await r.json();
         setTakenSlots(data.takenSlots);
       } catch {
@@ -80,7 +87,12 @@ export default function AssignModal({ quote, managerId, onClose, onAssigned }: P
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId: quote.id, technicianId, managerId, scheduledStart }),
+        body: JSON.stringify({
+          quoteId: quote.id,
+          technicianId,
+          managerId,
+          scheduledStart,
+        }),
       });
 
       if (res.status === 201) {
@@ -110,26 +122,34 @@ export default function AssignModal({ quote, managerId, onClose, onAssigned }: P
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div>
-          <h2 className="text-base font-semibold text-text-primary">Assign Job</h2>
+          <h2 className="text-base font-semibold text-text-primary">
+            Assign Job
+          </h2>
           <p className="text-sm text-text-secondary mt-0.5">{quote.title}</p>
         </div>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-primary">Technician</label>
+            <label className="text-sm font-medium text-text-primary">
+              Technician
+            </label>
             <select
               value={technicianId}
               onChange={(e) => setTechnicianId(e.target.value)}
               className={selectClass}
             >
               {technicians.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-primary">Date</label>
+            <label className="text-sm font-medium text-text-primary">
+              Date
+            </label>
             <input
               type="date"
               value={date}
@@ -140,7 +160,9 @@ export default function AssignModal({ quote, managerId, onClose, onAssigned }: P
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-primary">Start time</label>
+            <label className="text-sm font-medium text-text-primary">
+              Start time
+            </label>
             <select
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -148,18 +170,25 @@ export default function AssignModal({ quote, managerId, onClose, onAssigned }: P
               className={selectClass}
             >
               <option value="">
-                {loadingSlots ? "Checking availability…" : !date ? "Pick a date first" : "Select a time"}
+                {loadingSlots
+                  ? "Checking availability…"
+                  : !date
+                    ? "Pick a date first"
+                    : "Select a time"}
               </option>
               {ALL_SLOTS.map((slot) => {
                 const taken = takenSlots.includes(slot);
                 return (
                   <option key={slot} value={slot} disabled={taken}>
-                    {formatSlot(slot)}{taken ? " (unavailable)" : ""}
+                    {formatSlot(slot)}
+                    {taken ? " (unavailable)" : ""}
                   </option>
                 );
               })}
             </select>
-            <p className="text-xs text-text-secondary">Job runs for 2 hours from this time.</p>
+            <p className="text-xs text-text-secondary">
+              Job runs for 2 hours from this time.
+            </p>
           </div>
         </div>
 
@@ -170,7 +199,12 @@ export default function AssignModal({ quote, managerId, onClose, onAssigned }: P
         )}
 
         <div className="flex items-center justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={onClose} disabled={submitting}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onClose}
+            disabled={submitting}
+          >
             Cancel
           </Button>
           <Button size="sm" isLoading={submitting} onClick={handleSubmit}>

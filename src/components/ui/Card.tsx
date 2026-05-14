@@ -4,7 +4,11 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-export default function Card({ children, className = "", ...props }: CardProps) {
+export default function Card({
+  children,
+  className = "",
+  ...props
+}: CardProps) {
   return (
     <div
       className={`bg-surface border border-border rounded-xl shadow-sm ${className}`}

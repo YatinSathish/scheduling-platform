@@ -11,7 +11,7 @@ export async function GET() {
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch managers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

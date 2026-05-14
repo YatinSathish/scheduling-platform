@@ -1,6 +1,9 @@
 import { JobStatus, Notification, QuoteStatus } from "./types";
 
-export function formatDateRange(start: Date | string, end: Date | string): string {
+export function formatDateRange(
+  start: Date | string,
+  end: Date | string,
+): string {
   const s = new Date(start);
   const e = new Date(end);
 

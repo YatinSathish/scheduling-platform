@@ -37,7 +37,8 @@ export default function ManagerPage() {
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-brand-light text-brand-primary">
                 <span className="font-bold">{quotes.length}</span>
-                unscheduled quote{quotes.length !== 1 ? "s" : ""} awaiting assignment
+                unscheduled quote{quotes.length !== 1 ? "s" : ""} awaiting
+                assignment
               </span>
             )}
           </div>
@@ -48,13 +49,18 @@ export default function ManagerPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-36 bg-surface border border-border rounded-xl animate-pulse" />
+            <div
+              key={i}
+              className="h-36 bg-surface border border-border rounded-xl animate-pulse"
+            />
           ))}
         </div>
       ) : quotes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <p className="text-text-primary font-medium">All caught up</p>
-          <p className="text-sm text-text-secondary">No unscheduled quotes at the moment.</p>
+          <p className="text-sm text-text-secondary">
+            No unscheduled quotes at the moment.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -26,12 +26,16 @@ export default function QuoteCard({ quote, managerId, onAssigned }: Props) {
     <>
       <Card className="p-5 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-sm font-semibold text-text-primary">{quote.title}</h3>
+          <h3 className="text-sm font-semibold text-text-primary">
+            {quote.title}
+          </h3>
           <Badge status={quote.status} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className={`text-sm text-text-secondary ${!expanded && isLong ? "line-clamp-2" : ""}`}>
+          <p
+            className={`text-sm text-text-secondary ${!expanded && isLong ? "line-clamp-2" : ""}`}
+          >
             {quote.description}
           </p>
           {isLong && (
@@ -49,7 +53,9 @@ export default function QuoteCard({ quote, managerId, onAssigned }: Props) {
             {quote.manager && (
               <span className="text-xs text-text-secondary">
                 Requested by{" "}
-                <span className="text-text-primary font-medium">{quote.manager.name}</span>
+                <span className="text-text-primary font-medium">
+                  {quote.manager.name}
+                </span>
               </span>
             )}
             <span className="text-xs text-text-disabled">

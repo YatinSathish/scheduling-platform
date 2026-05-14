@@ -44,25 +44,34 @@ export default function TechnicianPage() {
                   <span className="font-bold">{scheduled.length}</span> upcoming
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-status-completed-bg text-status-completed-text">
-                  <span className="font-bold">{completed.length}</span> completed
+                  <span className="font-bold">{completed.length}</span>{" "}
+                  completed
                 </span>
               </>
             )}
           </div>
         </div>
-        <NotificationBell recipientType="TECHNICIAN" recipientId={currentUserId} />
+        <NotificationBell
+          recipientType="TECHNICIAN"
+          recipientId={currentUserId}
+        />
       </div>
 
       {loading ? (
         <div className="flex flex-col gap-4 max-w-2xl">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="h-28 bg-surface border border-border rounded-xl animate-pulse" />
+            <div
+              key={i}
+              className="h-28 bg-surface border border-border rounded-xl animate-pulse"
+            />
           ))}
         </div>
       ) : jobs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <p className="text-text-primary font-medium">No jobs scheduled</p>
-          <p className="text-sm text-text-secondary">Jobs assigned to you will appear here.</p>
+          <p className="text-sm text-text-secondary">
+            Jobs assigned to you will appear here.
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-6 max-w-2xl">

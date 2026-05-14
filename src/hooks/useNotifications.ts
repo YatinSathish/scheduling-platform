@@ -8,7 +8,7 @@ const POLL_INTERVAL_MS = 5000;
 
 export function useNotifications(
   recipientType: RecipientType,
-  recipientId: string | null
+  recipientId: string | null,
 ) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export function useNotifications(
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/notifications?recipientType=${recipientType}&recipientId=${recipientId}`
+        `/api/notifications?recipientType=${recipientType}&recipientId=${recipientId}`,
       );
       if (res.ok) {
         const data: Notification[] = await res.json();
@@ -41,16 +41,20 @@ export function useNotifications(
   const markAsRead = async (id: string) => {
     await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, readAt: new Date() } : n))
+      prev.map((n) => (n.id === id ? { ...n, readAt: new Date() } : n)),
     );
   };
 
   const markAllAsRead = async () => {
     const unread = notifications.filter((n) => n.readAt === null);
     if (unread.length === 0) return;
-    setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date() })));
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date() })),
+    );
     await Promise.all(
-      unread.map((n) => fetch(`/api/notifications/${n.id}/read`, { method: "PATCH" }))
+      unread.map((n) =>
+        fetch(`/api/notifications/${n.id}/read`, { method: "PATCH" }),
+      ),
     );
   };
 

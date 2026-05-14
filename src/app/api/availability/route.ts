@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (!technicianId || !date) {
     return NextResponse.json(
       { error: "technicianId and date are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch availability" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

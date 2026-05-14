@@ -10,17 +10,21 @@ interface Props {
   recipientId: string | null;
 }
 
-export default function NotificationBell({ recipientType, recipientId }: Props) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, refresh } = useNotifications(
-    recipientType,
-    recipientId
-  );
+export default function NotificationBell({
+  recipientType,
+  recipientId,
+}: Props) {
+  const { notifications, unreadCount, markAsRead, markAllAsRead, refresh } =
+    useNotifications(recipientType, recipientId);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -69,7 +73,9 @@ export default function NotificationBell({ recipientType, recipientId }: Props) 
       {open && (
         <div className="absolute right-0 mt-2 w-96 bg-surface border border-border rounded-xl shadow-lg z-20 overflow-hidden">
           <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
-            <h3 className="text-base font-semibold text-text-primary">Notifications</h3>
+            <h3 className="text-base font-semibold text-text-primary">
+              Notifications
+            </h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
@@ -89,14 +95,18 @@ export default function NotificationBell({ recipientType, recipientId }: Props) 
               notifications.map((n) => (
                 <li
                   key={n.id}
-                  onClick={() => { if (!n.readAt) markAsRead(n.id); }}
+                  onClick={() => {
+                    if (!n.readAt) markAsRead(n.id);
+                  }}
                   className={`
                     px-5 py-4 flex flex-col gap-1 cursor-pointer
                     hover:bg-surface-muted transition-colors
                     ${!n.readAt ? "border-l-2 border-brand-primary" : "border-l-2 border-transparent"}
                   `}
                 >
-                  <span className={`text-sm leading-snug ${!n.readAt ? "font-medium text-text-primary" : "text-text-secondary"}`}>
+                  <span
+                    className={`text-sm leading-snug ${!n.readAt ? "font-medium text-text-primary" : "text-text-secondary"}`}
+                  >
                     {n.message}
                   </span>
                   <span className="text-xs text-text-disabled">

@@ -28,7 +28,9 @@ export default function JobCard({ job, onCompleted }: Props) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/jobs/${job.id}/complete`, { method: "PATCH" });
+      const res = await fetch(`/api/jobs/${job.id}/complete`, {
+        method: "PATCH",
+      });
 
       if (res.ok) {
         onCompleted();
@@ -60,7 +62,9 @@ export default function JobCard({ job, onCompleted }: Props) {
 
       {description && (
         <div className="flex flex-col gap-1">
-          <p className={`text-sm text-text-secondary ${!expanded && isLong ? "line-clamp-2" : ""}`}>
+          <p
+            className={`text-sm text-text-secondary ${!expanded && isLong ? "line-clamp-2" : ""}`}
+          >
             {description}
           </p>
           {isLong && (
@@ -77,7 +81,9 @@ export default function JobCard({ job, onCompleted }: Props) {
       {job.manager && (
         <span className="text-xs text-text-secondary">
           Assigned by{" "}
-          <span className="font-medium text-text-primary">{job.manager.name}</span>
+          <span className="font-medium text-text-primary">
+            {job.manager.name}
+          </span>
         </span>
       )}
 
@@ -105,13 +111,21 @@ export default function JobCard({ job, onCompleted }: Props) {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div>
-              <h2 className="text-base font-semibold text-text-primary">Mark job as complete?</h2>
+              <h2 className="text-base font-semibold text-text-primary">
+                Mark job as complete?
+              </h2>
               <p className="text-sm text-text-secondary mt-1">
-                {job.quote?.title} — this will notify the manager and cannot be undone.
+                {job.quote?.title} — this will notify the manager and cannot be
+                undone.
               </p>
             </div>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setConfirming(false)} disabled={completing}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setConfirming(false)}
+                disabled={completing}
+              >
                 Cancel
               </Button>
               <Button size="sm" isLoading={completing} onClick={handleComplete}>

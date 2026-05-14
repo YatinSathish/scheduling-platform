@@ -7,8 +7,8 @@ interface BadgeProps {
 
 const statusLabels: Record<JobStatus | QuoteStatus, string> = {
   UNSCHEDULED: "Unscheduled",
-  SCHEDULED:   "Scheduled",
-  COMPLETED:   "Completed",
+  SCHEDULED: "Scheduled",
+  COMPLETED: "Completed",
 };
 
 export default function Badge({ status }: BadgeProps) {
