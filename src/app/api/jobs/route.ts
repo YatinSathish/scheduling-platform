@@ -3,6 +3,37 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AssignJobBody } from "@/lib/types";
 
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const technicianId = searchParams.get("technicianId");
+
+  if (!technicianId) {
+    return NextResponse.json(
+      { error: "technicianId is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const jobs = await prisma.job.findMany({
+      where: { technicianId },
+      include: {
+        quote: true,
+        technician: true,
+        manager: true,
+      },
+      orderBy: { scheduledStart: "asc" },
+    });
+
+    return NextResponse.json(jobs);
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to fetch jobs" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   let body: AssignJobBody;
 
@@ -91,7 +122,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prisma write contention under concurrent requests
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2034"
@@ -104,7 +134,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: "Failed to assign job" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
