@@ -34,14 +34,14 @@ async function main() {
   await prisma.technician.deleteMany();
 
   const [alice, bob] = await Promise.all([
-    prisma.manager.create({ data: { name: "Alice Chen", email: "alice@brix.com" } }),
-    prisma.manager.create({ data: { name: "Bob Hartley", email: "bob@brix.com" } }),
+    prisma.manager.create({ data: { name: "Alice Chen", email: "alice@example.com" } }),
+    prisma.manager.create({ data: { name: "Bob Hartley", email: "bob@example.com" } }),
   ]);
 
   const [sam, jordan, casey] = await Promise.all([
-    prisma.technician.create({ data: { name: "Sam Rivera", email: "sam@brix.com" } }),
-    prisma.technician.create({ data: { name: "Jordan Lee", email: "jordan@brix.com" } }),
-    prisma.technician.create({ data: { name: "Casey Kim", email: "casey@brix.com" } }),
+    prisma.technician.create({ data: { name: "Sam Rivera", email: "sam@example.com" } }),
+    prisma.technician.create({ data: { name: "Jordan Lee", email: "jordan@example.com" } }),
+    prisma.technician.create({ data: { name: "Casey Kim", email: "casey@example.com" } }),
   ]);
 
   // --- Unscheduled quotes (available to assign) ---

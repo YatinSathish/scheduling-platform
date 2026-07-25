@@ -4,7 +4,7 @@ import NavLinks from "@/components/NavLinks";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "brix | Service Scheduler",
+  title: "Job Scheduler",
   description: "Schedule and manage HVAC technician jobs",
 };
 
@@ -19,7 +19,7 @@ export default function RootLayout({
         <header className="bg-surface border-b border-border sticky top-0 z-10">
           <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
             <span className="text-brand-primary font-bold text-2xl tracking-tight">
-              brix
+              Job Scheduler
             </span>
             <NavLinks />
           </div>

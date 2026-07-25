@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* brix brand */
+  /* brand */
   --color-brand-primary:  #2563eb;
   --color-brand-hover:    #1d4ed8;
   --color-brand-light:    #eff6ff;
