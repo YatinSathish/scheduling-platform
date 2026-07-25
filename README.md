@@ -1,4 +1,4 @@
-# brix Scheduling Platform
+# Job Scheduler
 
 A scheduling tool that lets managers assign quotes to technicians, prevent double-bookings, and keep both sides notified as work moves through the pipeline.
 
@@ -35,7 +35,7 @@ The app opens to the manager dashboard. Use the **Manager / Technician** tab in 
 - **Mark Complete** shows a confirmation popup before firing to prevent accidental double-clicks
 - Notification bell shows new job assignments with timestamps
 
-> **Note:** Quotes represent work orders already in the system. They are pre-seeded for this demo allowing me to focus on the viewing and assigning flow. In production these would come through the brix quoting pipeline.
+> **Note:** Quotes represent work orders already in the system. They are pre-seeded so this repo can focus on the viewing and assigning flow. In production these would come through an upstream quoting pipeline.
 
 ---
 
@@ -43,13 +43,13 @@ The app opens to the manager dashboard. Use the **Manager / Technician** tab in 
 
 | Layer    | Choice                             | Why                                                                                                                                                                        |
 | -------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend | Next.js 14 App Router + TypeScript | React and TypeScript are my main stack. Next.js was a natural fit — App Router, file-based routing, TypeScript first-class. brix uses it too.                              |
+| Frontend | Next.js 14 App Router + TypeScript | React and TypeScript are my main stack. Next.js was a natural fit — App Router, file-based routing, TypeScript first-class.                                                |
 | API      | Next.js API routes                 | Keeps everything in one project — no separate backend process, no port juggling. Routes share the same TypeScript types as the frontend.                                   |
 | ORM      | Prisma v5                          | Clean Developer Experience. We define a schema, run a migration, get a fully typed client. Works great with TypeScript. v5 over v7 because v7 introduced breaking changes. |
 | Database | SQLite                             | No Docker or separate process needed. The data is FK-heavy which SQL handles well. Easy to swap for MySQL, which is more standard for production.                          |
 | Styling  | Tailwind v4                        | Brand tokens defined once in `@theme`, propagate as utility classes everywhere.                                                                                            |
 
-**On not using Go:** brix uses Go in production. In a time-boxed assessment I made the call that shipping a correct, readable solution in a familiar environment was more valuable than fighting an unfamiliar language. In production I'd extract these API routes into a standalone Go service.
+**On not using Go:** I considered Go for the API layer but made the call that shipping a correct, readable solution in a familiar environment was more valuable than fighting an unfamiliar language for a project this size. If this ever needed to scale past a single Next.js project, I'd extract these API routes into a standalone Go service.
 
 You can switch to MySQL by changing `provider = "sqlite"` to `provider = "mysql"` in `prisma/schema.prisma` and updating `DATABASE_URL` in `.env`. No schema changes needed as Prisma handles the rest.
 
@@ -57,7 +57,7 @@ You can switch to MySQL by changing `provider = "sqlite"` to `provider = "mysql"
 
 ## Conflict Prevention
 
-This is the core of the assessment.
+This is the core of the app.
 
 ### The overlap condition
 
@@ -91,9 +91,9 @@ Slots are checked in 30-minute intervals. Each slot is tested against the same o
 
 ## Notifications
 
-DB-based polling — the frontend polls `/api/notifications` every 5 seconds. Simple, transparent, and sufficient for assessment scope.
+DB-based polling — the frontend polls `/api/notifications` every 5 seconds. Simple, transparent, and sufficient for this scope.
 
-**Why not SSE/WebSockets for this submission:** The frontend checks for new notifications every 5 seconds. Simple, easy to follow in a code review, and does the job for this scope. For production the better approach would be Server-Sent Events, where the server pushes updates to the browser the moment something happens instead of the browser asking repeatedly. No unnecessary requests, no delay between the event and the notification appearing.
+**Why not SSE/WebSockets:** The frontend checks for new notifications every 5 seconds. Simple, easy to follow, and does the job for this scope. For production the better approach would be Server-Sent Events, where the server pushes updates to the browser the moment something happens instead of the browser asking repeatedly. No unnecessary requests, no delay between the event and the notification appearing.
 
 ---
 
@@ -107,24 +107,16 @@ There are 5 tables (Manager, Technician, Quote, Job, Notification). A Manager cr
 
 ## No Auth
 
-To make it easier to demo both flows, there is a user switcher in the header that lets one jump between the seeded managers and technicians without a login screen. In production this would be replaced with proper session-based auth and the switcher would be removed entirely.
+To make it easier to try both flows, there is a user switcher in the header that lets one jump between the seeded managers and technicians without a login screen. In production this would be replaced with proper session-based auth and the switcher would be removed entirely.
 
 ---
 
 ## What I'd Do Next
 
-- **Auth** — session-based auth so managers and technicians have their own accounts; removes the need for the demo switcher
+- **Auth** — session-based auth so managers and technicians have their own accounts; removes the need for the switcher
 - **Richer job details** — add fields like job notes, priority level, estimated duration, and customer contact info so technicians have everything they need before arriving on site
 - **Job acceptance** — let technicians accept or decline a job before it is confirmed, so managers know the job is actually covered
 - **SSE notifications** — replace polling with Server-Sent Events so notifications arrive instantly rather than on a polling interval
 - **Quote creation** — let managers create and manage quotes inside the app rather than relying on seeded data
 - **Optimistic UI** — remove an assigned quote from the manager grid immediately when assigned rather than waiting for the API to respond
-- **Production database** — swap SQLite for MySQL to match brix's production setup; Prisma makes this a one line config change
-
-## Use of AI Tools
-
-I used Claude Code throughout this assessment for scaffolding, code generation, debugging, and working through edge cases like the conflict prevention logic. I reviewed everything it produced before accepting it, and ran TypeScript checks and linting throughout to catch any issues before they built up.
-
-The architectural decisions were mine to reason through. Choosing SQLite over MongoDB was a deliberate call I worked out by weighing reviewer setup friction, data model fit, and what I could actually defend. The conflict prevention approach and the trade-offs in this README came from understanding the problem first and then using the tools to build it.
-
-I also pushed back when the AI steered me wrong. It initially suggested Go and MySQL to match brix's stack, and I made the call that shipping something half-finished in an unfamiliar language in a 3-5 hour window was the wrong move. The tool is only as good as the judgment behind it, which is exactly how I use it day to day at Ladder Inc.
+- **Production database** — swap SQLite for MySQL; Prisma makes this a one line config change
